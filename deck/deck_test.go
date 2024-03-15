@@ -70,7 +70,7 @@ func TestIsShuffled(t *testing.T) {
 
 func TestShuffle(t *testing.T) {
 	shuffledDeck := NewDefaultDeck()
-	shuffledDeck.shuffle()
+	shuffledDeck.Shuffle()
 	unshuffledDeck := NewDefaultDeck()
 	// there's a 1/52! chance of this actually being true
 	// instead of over-engineering let's ignore that

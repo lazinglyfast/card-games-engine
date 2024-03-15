@@ -1,14 +1,13 @@
 package main
 
 import (
+	"example.com/deck"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"strings"
-
-	"example.com/deck"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 // TODO: read best-practices
@@ -50,6 +49,12 @@ func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	shuffled := r.URL.Query().Get("shuffled")
+	shouldShuffle := strings.ToLower(shuffled) == "true"
+	if shouldShuffle {
+		deck.Shuffle()
+	}
+
 	(*ctx.decks)[deck.Guid] = deck
 	createdDeck := intoCreatedDeck(deck)
 	response, err := createdDeck.toJson()
@@ -66,7 +71,8 @@ func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
 func deriveDeck(r *http.Request) (deck.Deck, error) {
 	codes := r.URL.Query().Get("cards")
 	if codes == "" {
-		return deck.NewDefaultDeck(), nil
+		deck := deck.NewDefaultDeck()
+		return deck, nil
 	}
 
 	cards, err := parseCards(codes)
@@ -76,10 +82,10 @@ func deriveDeck(r *http.Request) (deck.Deck, error) {
 	return deck.NewDeck(cards), nil
 }
 
-func parseCards(codes string) ([]deck.Card, error) {
+func parseCards(query string) ([]deck.Card, error) {
 	cards := []deck.Card{}
-	splittedCodes := strings.Split(codes, ",")
-	for _, code := range splittedCodes {
+	codes := strings.Split(query, ",")
+	for _, code := range codes {
 		card, err := deck.ParseCard(code)
 		fmt.Println(code, card, err)
 		if err != nil {

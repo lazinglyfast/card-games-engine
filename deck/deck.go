@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"math/rand"
 	"sort"
-
-	"github.com/google/uuid"
 )
 
 // we could make a deck so extensible that it could work with any number of
@@ -262,7 +261,7 @@ func NewEmptyDeck() Deck {
 	return NewDeck(cards)
 }
 
-func (d *Deck) shuffle() {
+func (d *Deck) Shuffle() {
 	n := d.RemainingCardCount()
 	indices := rand.Perm(n)
 	cards := []Card{}
