@@ -13,7 +13,7 @@ func TestJsonRoundtrip(t *testing.T) {
 		newCard(King, Hearts),
 		newCard(Ace, Clubs),
 	}
-	deck := newDeck(cards)
+	deck := NewDeck(cards)
 
 	json, err := deck.ToJson()
 	if err != nil {
@@ -62,7 +62,7 @@ func TestIsShuffled(t *testing.T) {
 		newCard(Ace, Clubs),
 	}
 
-	shuffledDeck := newDeck(cards)
+	shuffledDeck := NewDeck(cards)
 	if !shuffledDeck.IsShuffled() {
 		t.Errorf("Expected deck to be shuffled")
 	}
@@ -87,7 +87,7 @@ func TestUnshuffle(t *testing.T) {
 		newCard(Ace, Clubs),
 	}
 
-	shuffledDeck := newDeck(cards)
+	shuffledDeck := NewDeck(cards)
 	if !shuffledDeck.IsShuffled() {
 		t.Errorf("Expected deck %v to be shuffled", shuffledDeck)
 	}
@@ -103,7 +103,7 @@ func TestUnshuffle(t *testing.T) {
 		newCard(Ace, Clubs),
 		newCard(King, Hearts),
 	}
-	expectedDeck := newDeck(cards)
+	expectedDeck := NewDeck(cards)
 
 	if !cmp.Equal(shuffledDeck.Cards, expectedDeck.Cards) {
 		t.Errorf("Cards %v differ from expected %v", shuffledDeck.Cards, expectedDeck.Cards)
@@ -116,7 +116,7 @@ func TestNewDeck(t *testing.T) {
 		newCard(King, Hearts),
 		newCard(Ace, Clubs),
 	}
-	deck := newDeck(cards)
+	deck := NewDeck(cards)
 	n := len(deck.Cards)
 	if n != 3 {
 		t.Errorf("Expected default deck to have 3 cards but it has %d instead", n)

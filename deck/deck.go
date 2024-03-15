@@ -2,10 +2,12 @@ package deck
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"math/rand"
 	"sort"
+
+	"github.com/google/uuid"
 )
 
 // we could make a deck so extensible that it could work with any number of
@@ -86,6 +88,22 @@ func newCard(rank Rank, suit Suit) Card {
 	return Card{rank, suit}
 }
 
+func ParseCard(code string) (Card, error) {
+	n := len(code)
+	rank, rankErr := parseRank(code[:(n - 1)])
+	suit, suitErr := parseSuit(code[n-1:])
+	if suitErr != nil || rankErr != nil {
+		msg := fmt.Sprintf("Failed to parse %s into Card", code)
+		return defaultCard(), errors.New(msg)
+	}
+	return newCard(rank, suit), nil
+
+}
+
+func defaultCard() Card {
+	return newCard(0, 0)
+}
+
 type Suit int64
 
 // suits are specified in increasing order according to domain rules
@@ -109,6 +127,24 @@ func (s Suit) String() string {
 		return "HEARTS"
 	}
 	return "UNKNOWN SUIT"
+}
+
+func parseSuit(suit string) (Suit, error) {
+	switch suit {
+	case "S":
+		return Spades, nil
+	case "D":
+		return Spades, nil
+	case "C":
+		return Spades, nil
+	case "H":
+		return Spades, nil
+	default:
+		{
+			msg := fmt.Sprintf("Invalid suit code: %v", suit)
+			return 0, errors.New(msg)
+		}
+	}
 }
 
 type Rank int64
@@ -161,6 +197,42 @@ func (r Rank) String() string {
 	return "UNKNOWN RANK"
 }
 
+func parseRank(rank string) (Rank, error) {
+	switch rank {
+	case "A":
+		return Ace, nil
+	case "2":
+		return V2, nil
+	case "3":
+		return V3, nil
+	case "4":
+		return V4, nil
+	case "5":
+		return V5, nil
+	case "6":
+		return V6, nil
+	case "7":
+		return V7, nil
+	case "8":
+		return V8, nil
+	case "9":
+		return V9, nil
+	case "10":
+		return V10, nil
+	case "J":
+		return Jack, nil
+	case "Q":
+		return Queen, nil
+	case "K":
+		return King, nil
+	default:
+		{
+			msg := fmt.Sprintf("Invalid rank code: %v", rank)
+			return 0, errors.New(msg)
+		}
+	}
+}
+
 func NewDefaultDeck() Deck {
 	cards := []Card{}
 	suits := []Suit{Spades, Diamonds, Clubs, Hearts}
@@ -174,15 +246,20 @@ func NewDefaultDeck() Deck {
 			cards = append(cards, card)
 		}
 	}
-	return newDeck(cards)
+	return NewDeck(cards)
 }
 
-func newDeck(cards []Card) Deck {
+func NewDeck(cards []Card) Deck {
 	guid := uuid.New()
 	return Deck{
 		cards,
 		guid,
 	}
+}
+
+func NewEmptyDeck() Deck {
+	cards := []Card{}
+	return NewDeck(cards)
 }
 
 func (d *Deck) shuffle() {

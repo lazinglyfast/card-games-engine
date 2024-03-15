@@ -1,28 +1,29 @@
 package main
 
 import (
-	"encoding/json"
-	"example.com/deck"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
-	// "net/url"
-	// "strings"
+	"strings"
+
+	"example.com/deck"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 // TODO: read best-practices
 // TODO: read best way to structure a go project (at least lib x main=cli=http
 // server)
 // TODO: on deck creation pass a shuffled arg and then shuffle accordingly
+// FEATURE: authentication so that one person's deck cannot be drawn by someone
+// else
 type HandlerContext struct {
 	decks *map[uuid.UUID]deck.Deck
 }
 
 func NewHandlerContext(decks *map[uuid.UUID]deck.Deck) *HandlerContext {
 	if decks == nil {
-		panic("nil MongoDB session!")
+		panic("nil decks!")
 	}
 	return &HandlerContext{decks}
 }
@@ -35,47 +36,58 @@ func main() {
 	r.HandleFunc("/open/{deck_guid}", ctx.Open)
 
 	err := http.ListenAndServe(":8000", r)
-	fmt.Println(err)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
-	newDeck := deck.NewDefaultDeck()
-	(*ctx.decks)[newDeck.Guid] = newDeck
-	createdDeck := intoCreatedDeck(newDeck)
-	response, err := createdDeck.toJson()
+	deck, err := deriveDeck(r)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		msg := fmt.Sprintf("%v\n", err)
 		io.WriteString(w, msg)
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		io.WriteString(w, response)
+		return
 	}
-}
 
-type CreatedDeck struct {
-	Guid               uuid.UUID `json:"deck_id"`
-	IsShuffled         bool      `json:"shuffled"`
-	RemainingCardCount int       `json:"remaining"`
-}
-
-func intoCreatedDeck(deck deck.Deck) CreatedDeck {
-	Guid := deck.Guid
-	IsShuffled := deck.IsShuffled()
-	RemainingCardCount := deck.RemainingCardCount()
-
-	return CreatedDeck{
-		Guid,
-		IsShuffled,
-		RemainingCardCount,
-	}
-}
-
-func (d *CreatedDeck) toJson() (string, error) {
-	jsonBytes, err := json.Marshal(d)
+	(*ctx.decks)[deck.Guid] = deck
+	createdDeck := intoCreatedDeck(deck)
+	response, err := createdDeck.toJson()
 	if err != nil {
-		return "", err
+		w.WriteHeader(http.StatusInternalServerError)
+		msg := fmt.Sprintf("%v\n", err)
+		io.WriteString(w, msg)
+		return
 	}
-	return string(jsonBytes), nil
+
+	io.WriteString(w, response)
+}
+
+func deriveDeck(r *http.Request) (deck.Deck, error) {
+	codes := r.URL.Query().Get("cards")
+	if codes == "" {
+		return deck.NewDefaultDeck(), nil
+	}
+
+	cards, err := parseCards(codes)
+	if err != nil {
+		return deck.NewEmptyDeck(), err
+	}
+	return deck.NewDeck(cards), nil
+}
+
+func parseCards(codes string) ([]deck.Card, error) {
+	cards := []deck.Card{}
+	splittedCodes := strings.Split(codes, ",")
+	for _, code := range splittedCodes {
+		card, err := deck.ParseCard(code)
+		fmt.Println(code, card, err)
+		if err != nil {
+			return []deck.Card{}, err
+		}
+		cards = append(cards, card)
+	}
+	return cards, nil
 }
 
 // we could have used r.PathValue("deck_guid") on go 1.22
@@ -96,7 +108,14 @@ func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deck := (*ctx.decks)[guid]
+	deck, ok := (*ctx.decks)[guid]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		msg := fmt.Sprintf("There's no deck with identifier %v", guid)
+		io.WriteString(w, msg)
+		return
+	}
+
 	openDeck := intoOpenDeck(deck)
 	json, jsonErr := openDeck.toJson()
 	if jsonErr != nil {
@@ -106,55 +125,4 @@ func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.WriteString(w, json)
-}
-
-func intoOpenDeck(deck deck.Deck) OpenDeck {
-	Guid := deck.Guid
-	IsShuffled := deck.IsShuffled()
-	RemainingCardCount := deck.RemainingCardCount()
-	Cards := []OpenCard{}
-	for _, card := range deck.Cards {
-		Cards = append(Cards, intoOpenCard(card))
-	}
-
-	return OpenDeck{
-		Guid,
-		IsShuffled,
-		RemainingCardCount,
-		Cards,
-	}
-}
-
-type OpenDeck struct {
-	Guid               uuid.UUID  `json:"deck_id"`
-	IsShuffled         bool       `json:"shuffled"`
-	RemainingCardCount int        `json:"remaining"`
-	Cards              []OpenCard `json:"cards"`
-}
-
-type OpenCard struct {
-	Rank string `json:"value"`
-	Suit string `json:"suit"`
-	Code string `json:"code"`
-}
-
-func intoOpenCard(card deck.Card) OpenCard {
-	Rank := card.Rank.String()
-	Suit := card.Suit.String()
-	Code := card.Code()
-	return OpenCard{
-		Rank,
-		Suit,
-		Code,
-	}
-}
-
-// some generics would come in handy here to avoid repeating the JSON
-// marshalling logic yet again
-func (d *OpenDeck) toJson() (string, error) {
-	jsonBytes, err := json.Marshal(d)
-	if err != nil {
-		return "", err
-	}
-	return string(jsonBytes), nil
 }
