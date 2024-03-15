@@ -307,7 +307,7 @@ func (d *Deck) unshuffle() {
 
 // do not resort to premature optimization (i.e a stack)
 // will it ever be the bottle neck in our future games? Probably not
-func (d *Deck) draw(count int) []Card {
+func (d *Deck) Draw(count int) []Card {
 	// early return on unhappy path: less nesting improves code readability
 	if count < 1 {
 		return []Card{}

@@ -36,10 +36,7 @@ func intoOpenDeck(deck deck.Deck) OpenDeck {
 	Guid := deck.Guid
 	IsShuffled := deck.IsShuffled()
 	RemainingCardCount := deck.RemainingCardCount()
-	Cards := []OpenCard{}
-	for _, card := range deck.Cards {
-		Cards = append(Cards, intoOpenCard(card))
-	}
+	Cards := IntoOpenCards(deck.Cards)
 
 	return OpenDeck{
 		Guid,
@@ -62,6 +59,14 @@ type OpenCard struct {
 	Code string `json:"code"`
 }
 
+func IntoOpenCards(cards []deck.Card) []OpenCard {
+	openCards := []OpenCard{}
+	for _, card := range cards {
+		openCards = append(openCards, intoOpenCard(card))
+	}
+	return openCards
+}
+
 func intoOpenCard(card deck.Card) OpenCard {
 	Rank := card.Rank.String()
 	Suit := card.Suit.String()
@@ -77,6 +82,14 @@ func intoOpenCard(card deck.Card) OpenCard {
 // marshalling logic yet again
 func (d *OpenDeck) toJson() (string, error) {
 	jsonBytes, err := json.Marshal(d)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
+}
+
+func marshallOpenCardsToJson(cards []OpenCard) (string, error) {
+	jsonBytes, err := json.Marshal(cards)
 	if err != nil {
 		return "", err
 	}

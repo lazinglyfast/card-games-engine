@@ -1,13 +1,16 @@
 package main
 
 import (
-	"example.com/deck"
+	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"example.com/deck"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 // TODO: read best-practices
@@ -33,6 +36,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/create", ctx.Create)
 	r.HandleFunc("/open/{deck_guid}", ctx.Open)
+	r.HandleFunc("/draw/{deck_guid}", ctx.Draw)
 
 	err := http.ListenAndServe(":8000", r)
 	if err != nil {
@@ -40,6 +44,7 @@ func main() {
 	}
 }
 
+// GET /create?cards=A2,8C&shuffled where cards and shuffled are optional
 func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
 	deck, err := deriveDeck(r)
 	if err != nil {
@@ -97,28 +102,12 @@ func parseCards(query string) ([]deck.Card, error) {
 }
 
 // we could have used r.PathValue("deck_guid") on go 1.22
+// GET /open/{guid}
 func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	deck_guid, ok := vars["deck_guid"]
-	if !ok {
+	deck, err := retrieveDeck(ctx, r)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		msg := "Failed to extract {deck_guid} from /open/{deck_guid}"
-		io.WriteString(w, msg)
-		return
-	}
-
-	guid, uuidErr := uuid.Parse(deck_guid)
-	if uuidErr != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		io.WriteString(w, fmt.Sprintf("%v", uuidErr))
-		return
-	}
-
-	deck, ok := (*ctx.decks)[guid]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		msg := fmt.Sprintf("There's no deck with identifier %v", guid)
-		io.WriteString(w, msg)
+		io.WriteString(w, fmt.Sprintf("%v", err))
 		return
 	}
 
@@ -131,4 +120,55 @@ func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.WriteString(w, json)
+}
+
+// GET /draw/{guid}?count=2 where count is optional
+func (ctx *HandlerContext) Draw(w http.ResponseWriter, r *http.Request) {
+	deck, err := retrieveDeck(ctx, r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		io.WriteString(w, fmt.Sprintf("%v", err))
+		return
+	}
+
+	param := r.URL.Query().Get("count")
+	count, err := strconv.Atoi(param)
+	if err != nil {
+		count = 1
+	}
+
+	cards := deck.Draw(count)
+	(*ctx.decks)[deck.Guid] = deck
+	body, err := marshallOpenCardsToJson(IntoOpenCards(cards))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		io.WriteString(w, fmt.Sprintf("%v", err))
+		return
+	}
+
+	io.WriteString(w, body)
+
+}
+
+func retrieveDeck(ctx *HandlerContext, r *http.Request) (deck.Deck, error) {
+	vars := mux.Vars(r)
+	deck_guid, ok := vars["deck_guid"]
+	if !ok {
+		msg := "Failed to extract {deck_guid} from /open/{deck_guid}"
+		return deck.NewEmptyDeck(), errors.New(msg)
+	}
+
+	guid, uuidErr := uuid.Parse(deck_guid)
+	if uuidErr != nil {
+		return deck.NewEmptyDeck(), uuidErr
+	}
+
+	foundDeck, ok := (*ctx.decks)[guid]
+	if !ok {
+		msg := fmt.Sprintf("There's no deck with identifier %v", guid)
+		return deck.NewEmptyDeck(), errors.New(msg)
+	}
+
+	return foundDeck, nil
 }

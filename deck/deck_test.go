@@ -26,26 +26,29 @@ func TestJsonRoundtrip(t *testing.T) {
 	}
 
 	if !cmp.Equal(deck, reconstructedDeck) {
-		t.Errorf("JSON roundtrip resulted in a different deck. Before: %v, After: %v", deck, reconstructedDeck)
+		pat := "JSON roundtrip resulted in a different deck. Before: %v, After: %v"
+		t.Errorf(pat, deck, reconstructedDeck)
 	}
 }
 
 func TestDraw(t *testing.T) {
 	deck := NewDefaultDeck()
-	actualCards := deck.draw(1)
-	if len(actualCards) != 1 {
-		t.Errorf("Expected to have drawn 1 card, instead drew %d", len(actualCards))
+	drawnCards := deck.Draw(1)
+	if len(drawnCards) != 1 {
+		pat := "Expected to have drawn 1 card, instead drew %d"
+		t.Errorf(pat, len(drawnCards))
 	}
 
-	actualCard := actualCards[0]
+	actualCard := drawnCards[0]
 	expectedCard := newCard(King, Hearts)
 	if actualCard != expectedCard {
-		t.Errorf("Expected drawn card of a unshuffled deck to be %v. Found %v instead", expectedCard, actualCard)
+		pat := "Expected drawn card of a unshuffled deck to be %v. Found %v instead"
+		t.Errorf(pat, expectedCard, actualCard)
 	}
 
 	// do not introduce non-simple logic otherwise we'll end up having to write tests for tests
 	// keep it simple
-	if len(deck.Cards) != 51 {
+	if deck.RemainingCardCount() != 51 {
 		t.Errorf("Expected deck to have 51 cards after having drawn 1 card")
 	}
 }
@@ -106,7 +109,8 @@ func TestUnshuffle(t *testing.T) {
 	expectedDeck := NewDeck(cards)
 
 	if !cmp.Equal(shuffledDeck.Cards, expectedDeck.Cards) {
-		t.Errorf("Cards %v differ from expected %v", shuffledDeck.Cards, expectedDeck.Cards)
+		pat := "Cards %v differ from expected %v"
+		t.Errorf(pat, shuffledDeck.Cards, expectedDeck.Cards)
 	}
 }
 
@@ -119,25 +123,29 @@ func TestNewDeck(t *testing.T) {
 	deck := NewDeck(cards)
 	n := len(deck.Cards)
 	if n != 3 {
-		t.Errorf("Expected default deck to have 3 cards but it has %d instead", n)
+		pat := "Expected default deck to have 3 cards but it has %d instead"
+		t.Errorf(pat, n)
 	}
 
 	firstCard := deck.Cards[0]
 	expectedCard := newCard(Ace, Spades)
 	if firstCard != expectedCard {
-		t.Errorf("Expected card to be %v but found %v instead", expectedCard, firstCard)
+		pat := "Expected card to be %v but found %v instead"
+		t.Errorf(pat, expectedCard, firstCard)
 	}
 
 	secondCard := deck.Cards[1]
 	expectedCard = newCard(King, Hearts)
 	if secondCard != expectedCard {
-		t.Errorf("Expected card to be %v but found %v instead", expectedCard, secondCard)
+		pat := "Expected card to be %v but found %v instead"
+		t.Errorf(pat, expectedCard, secondCard)
 	}
 
 	thirdCard := deck.Cards[2]
 	expectedCard = newCard(Ace, Clubs)
 	if thirdCard != expectedCard {
-		t.Errorf("Expected card to be %v but found %v instead", expectedCard, thirdCard)
+		pat := "Expected card to be %v but found %v instead"
+		t.Errorf(pat, expectedCard, thirdCard)
 	}
 }
 
@@ -145,24 +153,28 @@ func TestDefaultDeck(t *testing.T) {
 	deck := NewDefaultDeck()
 	n := len(deck.Cards)
 	if n != 52 {
-		t.Errorf("Expected default deck to have 52 cards but it has %d instead", n)
+		pat := "Expected default deck to have 52 cards but it has %d instead"
+		t.Errorf(pat, n)
 	}
 
 	firstCard := deck.Cards[0]
 	expectedCard := newCard(Ace, Spades)
 	if firstCard != expectedCard {
-		t.Errorf("Expected card to be %v but found %v instead", expectedCard, firstCard)
+		pat := "Expected card to be %v but found %v instead"
+		t.Errorf(pat, expectedCard, firstCard)
 	}
 
 	lastCard := deck.Cards[51]
 	expectedCard = newCard(King, Hearts)
 	if lastCard != expectedCard {
-		t.Errorf("Expected card to be %v but found %v instead", expectedCard, lastCard)
+		pat := "Expected card to be %v but found %v instead"
+		t.Errorf(pat, expectedCard, lastCard)
 	}
 
 	card := deck.Cards[26]
 	expectedCard = newCard(Ace, Clubs)
 	if card != expectedCard {
-		t.Errorf("Expected card to be %v but found %v instead", expectedCard, card)
+		pat := "Expected card to be %v but found %v instead"
+		t.Errorf(pat, expectedCard, card)
 	}
 }
