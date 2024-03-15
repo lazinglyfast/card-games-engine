@@ -1,11 +1,17 @@
-package main
+package deck
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"math/rand"
+	"sort"
 )
+
+// we could make a deck so extensible that it could work with any number of cards, suits and ranks
+// or include other concepts entirely (i.e. a healing card)
+// but if that's not an immediate of foreseeable business need there's no need to over-engineer
+// complexity must be tamed so the less code the better!
 
 // I'd rather not expose the internals of Deck and Card but json parsing needs it
 // as does go-cmp
@@ -26,12 +32,16 @@ func deckFromJson(text string) (Deck, error) {
 
 }
 
-func (d *Deck) toJson() (string, error) {
+func (d *Deck) ToJson() (string, error) {
 	jsonBytes, err := json.Marshal(d)
 	if err != nil {
 		return "", err
 	}
 	return string(jsonBytes), nil
+}
+
+func (d *Deck) RemainingCardCount() int {
+	return len(d.Cards)
 }
 
 type Card struct {
@@ -49,11 +59,13 @@ func newCard(rank Rank, suit Suit) Card {
 
 type Suit int64
 
+// suits are specified in increasing order according to domain rules
+// (Spades > Diamonds > Clubs > Hearts)
 const (
-	Spades Suit = iota
-	Diamonds
+	Hearts Suit = iota
 	Clubs
-	Hearts
+	Diamonds
+	Spades
 )
 
 func (s Suit) String() string {
@@ -120,7 +132,7 @@ func (r Rank) String() string {
 	return "unknown rank"
 }
 
-func newDefaultDeck() Deck {
+func NewDefaultDeck() Deck {
 	cards := []Card{}
 	suits := []Suit{Spades, Diamonds, Clubs, Hearts}
 	ranks := []Rank{Ace, V2, V3, V4, V5, V6, V7, V8, V9, V10, Jack, Queen, King}
@@ -145,7 +157,7 @@ func newDeck(cards []Card) Deck {
 }
 
 func (d *Deck) shuffle() {
-	n := len(d.Cards)
+	n := d.RemainingCardCount()
 	indices := rand.Perm(n)
 	cards := []Card{}
 	for _, i := range indices {
@@ -154,15 +166,49 @@ func (d *Deck) shuffle() {
 	d.Cards = cards
 }
 
+func (d *Deck) IsShuffled() bool {
+	n := d.RemainingCardCount()
+	for i := 0; i < (n - 1); i += 1 {
+		card := d.Cards[i]
+		nextCard := d.Cards[i+1]
+
+		suitOutOfOrder := card.Suit < nextCard.Suit
+		if suitOutOfOrder {
+			return true
+		}
+
+		if card.Suit == nextCard.Suit {
+			rankOutOfOrder := card.Rank > nextCard.Rank
+			if rankOutOfOrder {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (d *Deck) unshuffle() {
+	sort.SliceStable(d.Cards, func(i, j int) bool {
+		if d.Cards[i].Suit == d.Cards[j].Suit {
+			// in a unshuffled deck lowest ranks come first
+			// as defined by domain rules
+			return d.Cards[i].Rank < d.Cards[j].Rank
+		}
+		// in a unshuffled deck highest suits come first
+		// as defined by domain rules
+		return d.Cards[i].Suit > d.Cards[j].Suit
+	})
+}
+
 // do not resort to premature optimization (i.e a stack)
 // will it ever be the bottle neck in our future games? Probably not
 func (d *Deck) draw(count int) []Card {
-	// early return on unhappy path
+	// early return on unhappy path: less nesting improves code readability
 	if count < 1 {
 		return []Card{}
 	}
 
-	n := len(d.Cards)
+	n := d.RemainingCardCount()
 	to := n - count
 	remainingCards := d.Cards[:to]
 	drawnCards := d.Cards[to:]
