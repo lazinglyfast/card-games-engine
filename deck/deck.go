@@ -8,14 +8,15 @@ import (
 	"sort"
 )
 
-// we could make a deck so extensible that it could work with any number of cards, suits and ranks
-// or include other concepts entirely (i.e. a healing card)
-// but if that's not an immediate of foreseeable business need there's no need to over-engineer
-// complexity must be tamed so the less code the better!
+// we could make a deck so extensible that it could work with any number of
+// cards, suits and ranks or include other concepts entirely
+// (i.e. a healing card)
+// but if that's not an immediate of foreseeable business need there's no need
+// to over-engineer complexity must be tamed so the less code the better!
 
-// I'd rather not expose the internals of Deck and Card but json parsing needs it
-// as does go-cmp
-// if a solid API were indeed the goal I'd then create a json serializable type and convert into it
+// I'd rather not expose the internals of Deck and Card but json parsing needs
+// it as does go-cmp. If a solid API were indeed the goal I'd then create a
+// json serializable type and convert into it
 type Deck struct {
 	Cards []Card
 	Guid  uuid.UUID
@@ -30,6 +31,31 @@ func deckFromJson(text string) (Deck, error) {
 	}
 	return deck, nil
 
+}
+
+func (d *Deck) IntoCreatedDeckJson() ([]byte, error) {
+	return json.Marshal(&struct {
+		Guid               uuid.UUID `json:"deck_id"`
+		IsShuffled         bool      `json:"shuffled"`
+		RemainingCardCount int       `json:"remaining"`
+	}{
+		Guid:               d.Guid,
+		IsShuffled:         d.IsShuffled(),
+		RemainingCardCount: d.RemainingCardCount(),
+	})
+}
+
+func (d *Deck) IntoOpenDeckJson() ([]byte, error) {
+	return json.Marshal(&struct {
+		Guid               uuid.UUID `json:"deck_id"`
+		IsShuffled         bool      `json:"shuffled"`
+		RemainingCardCount int       `json:"remaining"`
+		Cards              []Card    `json:"cards"`
+	}{
+		Guid:               d.Guid,
+		IsShuffled:         d.IsShuffled(),
+		RemainingCardCount: d.RemainingCardCount(),
+	})
 }
 
 func (d *Deck) ToJson() (string, error) {
@@ -49,8 +75,11 @@ type Card struct {
 	Suit Suit
 }
 
-func (c Card) String() string {
-	return fmt.Sprintf("%s%s", c.Rank, c.Suit)
+func (c *Card) Code() string {
+	// using the ASCII subset of UTF-8 so this is ok
+	rank := c.Rank.String()[0]
+	suit := c.Suit.String()[0]
+	return fmt.Sprintf("%s%s", string(rank), string(suit))
 }
 
 func newCard(rank Rank, suit Suit) Card {
@@ -71,15 +100,15 @@ const (
 func (s Suit) String() string {
 	switch s {
 	case Spades:
-		return "S"
+		return "SPADES"
 	case Diamonds:
-		return "D"
+		return "DIAMONDS"
 	case Clubs:
-		return "C"
+		return "CLUBS"
 	case Hearts:
-		return "H"
+		return "HEARTS"
 	}
-	return "unknown suit"
+	return "UNKNOWN SUIT"
 }
 
 type Rank int64
@@ -103,7 +132,7 @@ const (
 func (r Rank) String() string {
 	switch r {
 	case Ace:
-		return "A"
+		return "ACE"
 	case V2:
 		return "2"
 	case V3:
@@ -123,13 +152,13 @@ func (r Rank) String() string {
 	case V10:
 		return "10"
 	case Jack:
-		return "J"
+		return "JACK"
 	case Queen:
-		return "Q"
+		return "QUEEN"
 	case King:
-		return "K"
+		return "KING"
 	}
-	return "unknown rank"
+	return "UNKNOWN RANK"
 }
 
 func NewDefaultDeck() Deck {

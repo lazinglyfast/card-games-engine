@@ -15,7 +15,7 @@ func TestJsonRoundtrip(t *testing.T) {
 	}
 	deck := newDeck(cards)
 
-	json, err := deck.toJson()
+	json, err := deck.ToJson()
 	if err != nil {
 		t.Errorf("JSON-serialization of deck failed")
 	}
