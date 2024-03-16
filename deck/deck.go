@@ -9,13 +9,6 @@ import (
 	"sort"
 )
 
-// we could make a deck so extensible that it could work with any number of
-// cards, suits and ranks or include other concepts entirely
-// (i.e. a healing card)
-// but if that's not an immediate or foreseeable requirement there's no need
-// to over-engineer. Complexity must be tamed and one of the most effective
-// ways to do that is to not add more code
-
 type Deck struct {
 	Cards []Card
 	Guid  uuid.UUID
