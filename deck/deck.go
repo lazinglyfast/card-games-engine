@@ -1,7 +1,7 @@
+// A generic backend engine for card games
 package deck
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -12,59 +12,13 @@ import (
 // we could make a deck so extensible that it could work with any number of
 // cards, suits and ranks or include other concepts entirely
 // (i.e. a healing card)
-// but if that's not an immediate of foreseeable business need there's no need
-// to over-engineer complexity must be tamed so the less code the better!
+// but if that's not an immediate or foreseeable requirement there's no need
+// to over-engineer. Complexity must be tamed and one of the most effective
+// ways to do that is to not add more code
 
-// I'd rather not expose the internals of Deck and Card but json parsing needs
-// it as does go-cmp. If a solid API were indeed the goal I'd then create a
-// json serializable type and convert into it
 type Deck struct {
 	Cards []Card
 	Guid  uuid.UUID
-}
-
-func deckFromJson(text string) (Deck, error) {
-	deck := Deck{}
-	bytes := []byte(text)
-	err := json.Unmarshal(bytes, &deck)
-	if err != nil {
-		return deck, err
-	}
-	return deck, nil
-
-}
-
-func (d *Deck) IntoCreatedDeckJson() ([]byte, error) {
-	return json.Marshal(&struct {
-		Guid               uuid.UUID `json:"deck_id"`
-		IsShuffled         bool      `json:"shuffled"`
-		RemainingCardCount int       `json:"remaining"`
-	}{
-		Guid:               d.Guid,
-		IsShuffled:         d.IsShuffled(),
-		RemainingCardCount: d.RemainingCardCount(),
-	})
-}
-
-func (d *Deck) IntoOpenDeckJson() ([]byte, error) {
-	return json.Marshal(&struct {
-		Guid               uuid.UUID `json:"deck_id"`
-		IsShuffled         bool      `json:"shuffled"`
-		RemainingCardCount int       `json:"remaining"`
-		Cards              []Card    `json:"cards"`
-	}{
-		Guid:               d.Guid,
-		IsShuffled:         d.IsShuffled(),
-		RemainingCardCount: d.RemainingCardCount(),
-	})
-}
-
-func (d *Deck) ToJson() (string, error) {
-	jsonBytes, err := json.Marshal(d)
-	if err != nil {
-		return "", err
-	}
-	return string(jsonBytes), nil
 }
 
 func (d *Deck) RemainingCardCount() int {
@@ -271,6 +225,8 @@ func (d *Deck) Shuffle() {
 	d.Cards = cards
 }
 
+// this method (and the whole design really) would need to be rethinked if
+// joker cards get introduced
 func (d *Deck) IsShuffled() bool {
 	n := d.RemainingCardCount()
 	for i := 0; i < (n - 1); i += 1 {
@@ -306,7 +262,7 @@ func (d *Deck) unshuffle() {
 }
 
 // do not resort to premature optimization (i.e a stack)
-// will it ever be the bottle neck in our future games? Probably not
+// will this ever be the bottle neck in our future games? Probably not
 func (d *Deck) Draw(count int) []Card {
 	// early return on unhappy path: less nesting improves code readability
 	if count < 1 {
@@ -314,6 +270,10 @@ func (d *Deck) Draw(count int) []Card {
 	}
 
 	n := d.RemainingCardCount()
+	if count > n {
+		count = n
+	}
+
 	to := n - count
 	remainingCards := d.Cards[:to]
 	drawnCards := d.Cards[to:]

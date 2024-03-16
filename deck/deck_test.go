@@ -1,5 +1,3 @@
-// go test ./... # runs all tests
-
 package deck
 
 import (
@@ -7,49 +5,50 @@ import (
 	"testing"
 )
 
-func TestJsonRoundtrip(t *testing.T) {
-	cards := []Card{
-		newCard(Ace, Spades),
-		newCard(King, Hearts),
-		newCard(Ace, Clubs),
-	}
-	deck := NewDeck(cards)
-
-	json, err := deck.ToJson()
-	if err != nil {
-		t.Errorf("JSON-serialization of deck failed")
-	}
-
-	reconstructedDeck, err := deckFromJson(json)
-	if err != nil {
-		t.Errorf("JSON-deserialization of deck failed")
-	}
-
-	if !cmp.Equal(deck, reconstructedDeck) {
-		pat := "JSON roundtrip resulted in a different deck. Before: %v, After: %v"
-		t.Errorf(pat, deck, reconstructedDeck)
-	}
-}
-
 func TestDraw(t *testing.T) {
 	deck := NewDefaultDeck()
 	drawnCards := deck.Draw(1)
 	if len(drawnCards) != 1 {
-		pat := "Expected to have drawn 1 card, instead drew %d"
-		t.Errorf(pat, len(drawnCards))
+		msg := "Expected to have drawn 1 card, instead drew %d"
+		t.Errorf(msg, len(drawnCards))
 	}
 
 	actualCard := drawnCards[0]
 	expectedCard := newCard(King, Hearts)
 	if actualCard != expectedCard {
-		pat := "Expected drawn card of a unshuffled deck to be %v. Found %v instead"
-		t.Errorf(pat, expectedCard, actualCard)
+		msg := "Expected drawn card of a unshuffled deck to be %v. Found %v instead"
+		t.Errorf(msg, expectedCard, actualCard)
 	}
 
-	// do not introduce non-simple logic otherwise we'll end up having to write tests for tests
-	// keep it simple
+	// do not introduce non-simple logic otherwise we'll end up having to
+	// write tests for tests. Keep it simple
 	if deck.RemainingCardCount() != 51 {
 		t.Errorf("Expected deck to have 51 cards after having drawn 1 card")
+	}
+}
+
+func TestDrawFromEmptyDeck(t *testing.T) {
+	deck := NewEmptyDeck()
+	drawnCards := deck.Draw(10)
+	if len(drawnCards) != 0 {
+		msg := "Expected empty deck to have to cards, instead found %v"
+		t.Errorf(msg, drawnCards)
+	}
+}
+
+func TestDrawMoreCardsThanAvailable(t *testing.T) {
+	cards := []Card{
+		newCard(Ace, Spades),
+		newCard(King, Hearts),
+		newCard(Ace, Clubs),
+	}
+
+	deck := NewDeck(cards)
+
+	drawnCards := deck.Draw(5)
+	if len(drawnCards) != 3 {
+		msg := "Expected at most 3 cards to be drawn since the deck had only 3 cards, instead found %v"
+		t.Errorf(msg, len(drawnCards))
 	}
 }
 
@@ -109,8 +108,8 @@ func TestUnshuffle(t *testing.T) {
 	expectedDeck := NewDeck(cards)
 
 	if !cmp.Equal(shuffledDeck.Cards, expectedDeck.Cards) {
-		pat := "Cards %v differ from expected %v"
-		t.Errorf(pat, shuffledDeck.Cards, expectedDeck.Cards)
+		msg := "Cards %v differ from expected %v"
+		t.Errorf(msg, shuffledDeck.Cards, expectedDeck.Cards)
 	}
 }
 
@@ -123,29 +122,29 @@ func TestNewDeck(t *testing.T) {
 	deck := NewDeck(cards)
 	n := len(deck.Cards)
 	if n != 3 {
-		pat := "Expected default deck to have 3 cards but it has %d instead"
-		t.Errorf(pat, n)
+		msg := "Expected default deck to have 3 cards but it has %d instead"
+		t.Errorf(msg, n)
 	}
 
 	firstCard := deck.Cards[0]
 	expectedCard := newCard(Ace, Spades)
 	if firstCard != expectedCard {
-		pat := "Expected card to be %v but found %v instead"
-		t.Errorf(pat, expectedCard, firstCard)
+		msg := "Expected card to be %v but found %v instead"
+		t.Errorf(msg, expectedCard, firstCard)
 	}
 
 	secondCard := deck.Cards[1]
 	expectedCard = newCard(King, Hearts)
 	if secondCard != expectedCard {
-		pat := "Expected card to be %v but found %v instead"
-		t.Errorf(pat, expectedCard, secondCard)
+		msg := "Expected card to be %v but found %v instead"
+		t.Errorf(msg, expectedCard, secondCard)
 	}
 
 	thirdCard := deck.Cards[2]
 	expectedCard = newCard(Ace, Clubs)
 	if thirdCard != expectedCard {
-		pat := "Expected card to be %v but found %v instead"
-		t.Errorf(pat, expectedCard, thirdCard)
+		msg := "Expected card to be %v but found %v instead"
+		t.Errorf(msg, expectedCard, thirdCard)
 	}
 }
 
@@ -153,28 +152,28 @@ func TestDefaultDeck(t *testing.T) {
 	deck := NewDefaultDeck()
 	n := len(deck.Cards)
 	if n != 52 {
-		pat := "Expected default deck to have 52 cards but it has %d instead"
-		t.Errorf(pat, n)
+		msg := "Expected default deck to have 52 cards but it has %d instead"
+		t.Errorf(msg, n)
 	}
 
 	firstCard := deck.Cards[0]
 	expectedCard := newCard(Ace, Spades)
 	if firstCard != expectedCard {
-		pat := "Expected card to be %v but found %v instead"
-		t.Errorf(pat, expectedCard, firstCard)
+		msg := "Expected card to be %v but found %v instead"
+		t.Errorf(msg, expectedCard, firstCard)
 	}
 
 	lastCard := deck.Cards[51]
 	expectedCard = newCard(King, Hearts)
 	if lastCard != expectedCard {
-		pat := "Expected card to be %v but found %v instead"
-		t.Errorf(pat, expectedCard, lastCard)
+		msg := "Expected card to be %v but found %v instead"
+		t.Errorf(msg, expectedCard, lastCard)
 	}
 
 	card := deck.Cards[26]
 	expectedCard = newCard(Ace, Clubs)
 	if card != expectedCard {
-		pat := "Expected card to be %v but found %v instead"
-		t.Errorf(pat, expectedCard, card)
+		msg := "Expected card to be %v but found %v instead"
+		t.Errorf(msg, expectedCard, card)
 	}
 }

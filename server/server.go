@@ -16,12 +16,6 @@ import (
 // but the router didn't play well with the testing library
 var GuidFromUrl = regexp.MustCompile(`/(open|draw)/([\w-]+)`)
 
-// TODO: read best-practices
-// TODO: read best way to structure a go project (at least lib x main=cli=http
-// server)
-// TODO: on deck creation pass a shuffled arg and then shuffle accordingly
-// FEATURE: authentication so that one person's deck cannot be drawn by someone
-// else
 type HandlerContext struct {
 	decks *map[uuid.UUID]deck.Deck
 }
@@ -104,9 +98,9 @@ func parseCards(query string) ([]deck.Card, error) {
 	return cards, nil
 }
 
-// we could have used r.PathValue("deck_guid") on go 1.22
 // GET /open/{guid}
 func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	deck, err := retrieveDeck(ctx, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -128,6 +122,7 @@ func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 
 // GET /draw/{guid}?count=2 where count is optional
 func (ctx *HandlerContext) Draw(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	deck, err := retrieveDeck(ctx, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -172,6 +167,7 @@ func retrieveDeck(ctx *HandlerContext, r *http.Request) (deck.Deck, error) {
 	return foundDeck, nil
 }
 
+// we could have used r.PathValue("deck_guid") on go 1.22
 func extractGuidFromUrlPath(path string) (uuid.UUID, error) {
 	matches := GuidFromUrl.FindStringSubmatch(path)
 
