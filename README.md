@@ -12,9 +12,9 @@
 - in a terminal: cd server && go run . // this runs the server
 - in another terminal: cd js-client-to-go-cards && npm run dev
 - one can interact with the server with a client that can be:
-  - via command line with for instance "curl http://localhost:8000/create"
+  - via command line with for instance `curl http://localhost:8000/create`
   - with an app like postman
-  - with the simple react app launched above by visiting: http://localhost:5173/
+  - with the simple react app launched above by visiting: `http://localhost:5173`
     ![alt text](https://github.com/lazinglyfast/card-games-engine/blob/main/react_app.png?raw=true)
 
 # Comments on the evaluation
