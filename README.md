@@ -15,7 +15,7 @@
   - via command line with for instance "curl http://localhost:8000/create"
   - with an app like postman
   - with the simple react app launched above by visiting: http://localhost:5173/
-    ![alt text](https://github.com/lazinglyfast//blob/card-games-engine/screenshot_2024-03-16T17:14:18-03:00.png?raw=true)
+    ![alt text](https://github.com/lazinglyfast/main/blob/card-games-engine/react_app.png?raw=true)
 
 # Comments on the evaluation
 
