@@ -40,3 +40,4 @@
   - persistent storage
   - CI/CD
   - containerization
+- one thing that I should probably have included but didn't is some logic along the lines of "cannot draw from deck that hasn't been opened yet"
