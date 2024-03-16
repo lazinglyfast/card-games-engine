@@ -48,6 +48,7 @@ func main() {
 
 // GET /create?cards=A2,8C&shuffled where cards and shuffled are optional
 func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	deck, err := deriveDeck(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -185,4 +186,8 @@ func extractGuidFromUrlPath(path string) (uuid.UUID, error) {
 	}
 
 	return guid, nil
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
