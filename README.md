@@ -9,8 +9,8 @@
 # Running
 
 - git clone `git@github.com:lazinglyfast/card-games-engine.git`
-- in a terminal: cd server && go run . // this runs the server
-- in another terminal: cd js-client-to-go-cards && npm run dev
+- in a terminal: `cd server && go run .` // this runs the server
+- in another terminal: `cd js-client-to-go-cards && npm run dev`
 - one can interact with the server with a client that can be:
   - via command line with for instance `curl http://localhost:8000/create`
   - with an app like postman
