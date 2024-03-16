@@ -1,13 +1,23 @@
-# running
+# Description
 
-- git clone
-- in a terminal: cd server && go run .
+- A card games engine with an API that allows for manipulation of a standard deck of cards
+- The API can be succintly described as:
+  - GET http://localhost/create?cards=A2,8C&shuffled where cards and shuffled are optional
+  - GET http://localhost/open/{guid}
+  - GET http://localhost/draw/{guid}?count=2 where count is optional and defaults to 1
+
+# Running
+
+- git clone git@github.com:lazinglyfast/card-games-engine.git
+- in a terminal: cd server && go run . // this runs the server
 - in another terminal: cd js-client-to-go-cards && npm run dev
-- one can interact with the server with either
-  - the simple react app launched above by visiting: http://localhost:5173/
-  - or else via command line with for instance "curl http://localhost:8000/create"
+- one can interact with the server with a client that can be:
+  - via command line with for instance "curl http://localhost:8000/create"
+  - with an app like postman
+  - with the simple react app launched above by visiting: http://localhost:5173/
+    ![alt text](https://github.com/lazinglyfast//blob/card-games-engine/screenshot_2024-03-16T17:14:18-03:00.png?raw=true)
 
-# comments on the evaluation
+# Comments on the evaluation
 
 - extensibility/complexity
   - we could make a deck so extensible that it could work with any number of cards, suits and ranks or include other concepts entirely (i.e. a healing card) but if that's not an immediate or foreseeable requirement there's no need to over-engineer
@@ -27,3 +37,6 @@
   - authentication so that one user cannot mess with another's deck
   - port number should not be hardcoded and should be dynamic
   - coming up with a design that includes joker cards or more esoteric cards and card features other than rank and suit
+  - persistent storage
+  - CI/CD
+  - containerization

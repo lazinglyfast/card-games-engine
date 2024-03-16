@@ -184,6 +184,7 @@ func extractGuidFromUrlPath(path string) (uuid.UUID, error) {
 	return guid, nil
 }
 
+// used to same-origin React app can interact with the server
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
