@@ -2,13 +2,13 @@
 
 - A card games engine with an API that allows for manipulation of a standard deck of cards
 - The API can be succintly described as:
-  - GET http://localhost/create?cards=A2,8C&shuffled where cards and shuffled are optional
-  - GET http://localhost/open/{guid}
-  - GET http://localhost/draw/{guid}?count=2 where count is optional and defaults to 1
+  - GET `http://localhost/create?cards=A2,8C&shuffled` where cards and shuffled are optional
+  - GET `http://localhost/open/{guid}`
+  - GET `http://localhost/draw/{guid}?count=2` where count is optional and defaults to 1
 
 # Running
 
-- git clone git@github.com:lazinglyfast/card-games-engine.git
+- git clone `git@github.com:lazinglyfast/card-games-engine.git`
 - in a terminal: cd server && go run . // this runs the server
 - in another terminal: cd js-client-to-go-cards && npm run dev
 - one can interact with the server with a client that can be:
