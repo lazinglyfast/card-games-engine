@@ -2,16 +2,19 @@ package main
 
 import (
 	"errors"
+	"example.com/deck"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
-
-	"example.com/deck"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
+
+// usage of a router package is the correct alternative to manual regexp parsing
+// but the router didn't play well with the testing library
+var GuidFromUrl = regexp.MustCompile(`/(open|draw)/([\w-]+)`)
 
 // TODO: read best-practices
 // TODO: read best way to structure a go project (at least lib x main=cli=http
@@ -25,7 +28,7 @@ type HandlerContext struct {
 
 func NewHandlerContext(decks *map[uuid.UUID]deck.Deck) *HandlerContext {
 	if decks == nil {
-		panic("nil decks!")
+		panic("decks must de defined!")
 	}
 	return &HandlerContext{decks}
 }
@@ -33,12 +36,11 @@ func NewHandlerContext(decks *map[uuid.UUID]deck.Deck) *HandlerContext {
 func main() {
 	decks := make(map[uuid.UUID]deck.Deck)
 	ctx := NewHandlerContext(&decks)
-	r := mux.NewRouter()
-	r.HandleFunc("/create", ctx.Create)
-	r.HandleFunc("/open/{deck_guid}", ctx.Open)
-	r.HandleFunc("/draw/{deck_guid}", ctx.Draw)
+	http.HandleFunc("/create", ctx.Create)
+	http.HandleFunc("/open/", ctx.Open)
+	http.HandleFunc("/draw/", ctx.Draw)
 
-	err := http.ListenAndServe(":8000", r)
+	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -70,6 +72,7 @@ func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	io.WriteString(w, response)
 }
 
@@ -92,7 +95,6 @@ func parseCards(query string) ([]deck.Card, error) {
 	codes := strings.Split(query, ",")
 	for _, code := range codes {
 		card, err := deck.ParseCard(code)
-		fmt.Println(code, card, err)
 		if err != nil {
 			return []deck.Card{}, err
 		}
@@ -119,6 +121,7 @@ func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	io.WriteString(w, json)
 }
 
@@ -147,21 +150,16 @@ func (ctx *HandlerContext) Draw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	io.WriteString(w, body)
 
 }
 
 func retrieveDeck(ctx *HandlerContext, r *http.Request) (deck.Deck, error) {
-	vars := mux.Vars(r)
-	deck_guid, ok := vars["deck_guid"]
-	if !ok {
-		msg := "Failed to extract {deck_guid} from /open/{deck_guid}"
+	guid, err := extractGuidFromUrlPath(r.URL.Path)
+	if err != nil {
+		msg := fmt.Sprintf("%v", err)
 		return deck.NewEmptyDeck(), errors.New(msg)
-	}
-
-	guid, uuidErr := uuid.Parse(deck_guid)
-	if uuidErr != nil {
-		return deck.NewEmptyDeck(), uuidErr
 	}
 
 	foundDeck, ok := (*ctx.decks)[guid]
@@ -171,4 +169,20 @@ func retrieveDeck(ctx *HandlerContext, r *http.Request) (deck.Deck, error) {
 	}
 
 	return foundDeck, nil
+}
+
+func extractGuidFromUrlPath(path string) (uuid.UUID, error) {
+	matches := GuidFromUrl.FindStringSubmatch(path)
+
+	if len(matches) < 3 {
+		msg := fmt.Sprintf("Failed to extract guid from url path %v", path)
+		return uuid.New(), errors.New(msg)
+	}
+
+	guid, err := uuid.Parse(matches[2])
+	if err != nil {
+		return uuid.New(), err
+	}
+
+	return guid, nil
 }
