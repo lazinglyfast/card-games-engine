@@ -40,9 +40,15 @@ func main() {
 	}
 }
 
-// GET /create?cards=A2,8C&shuffled where cards and shuffled are optional
+// POST /create?cards=A2,8C&shuffled where cards and shuffled are optional
 func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	deck, err := deriveDeck(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -68,6 +74,7 @@ func (ctx *HandlerContext) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	io.WriteString(w, response)
 }
 
@@ -101,6 +108,12 @@ func parseCards(query string) ([]deck.Card, error) {
 // GET /open/{guid}
 func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	deck, err := retrieveDeck(ctx, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -123,6 +136,13 @@ func (ctx *HandlerContext) Open(w http.ResponseWriter, r *http.Request) {
 // GET /draw/{guid}?count=2 where count is optional
 func (ctx *HandlerContext) Draw(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	// Getting CORS error with http.MethodPatch
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	deck, err := retrieveDeck(ctx, r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -147,6 +167,7 @@ func (ctx *HandlerContext) Draw(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	io.WriteString(w, body)
 
 }

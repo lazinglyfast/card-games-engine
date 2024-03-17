@@ -19,6 +19,10 @@
 
 # Comments on the evaluation
 
+- misc
+  - having more depth of experience with other tech stacks I see there are certain things that feel unidiomatic with my current knowledge of go like
+    - too much manual work around rest/http support (there must exist more declarative approaches)
+    - verbosity of tests
 - extensibility/complexity
   - we could make a deck so extensible that it could work with any number of cards, suits and ranks or include other concepts entirely (i.e. a healing card) but if that's not an immediate or foreseeable requirement there's no need to over-engineer
   - complexity must be tamed and one of the most effective ways to do that is to not add more code
